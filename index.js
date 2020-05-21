@@ -43,7 +43,7 @@ function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 var PREBID_TIMEOUT = 1500;
-var A9_TIMEOUT = 1;
+var A9_TIMEOUT = 1500;
 var _config = {};
 var _user = {};
 var _adUnits = [];
@@ -94,16 +94,12 @@ var _fetchBidsA9 = function _fetchBidsA9() {
 };
 
 var initA9 = function initA9() {
-  _log("bids returned a9"); //window.__reactgamloaded = window.__reactgamloaded || {};
-  //window.__reactgamloaded.a9 = true;
-
+  _log("bids returned a9");
 
   _loaded.a9 = true;
   googletag.cmd.push(function () {
     apstag.setDisplayBids();
-  }); // if(window.__reactgamloaded.a9 && window.__reactgamloaded.pbjs){
-  //   displayAds();
-  // }
+  });
 
   if (_loaded.a9 && _loaded.pbjs) {
     displayAds();
@@ -114,9 +110,7 @@ var initPbjs = function initPbjs() {
   if (pbjs.initAdserverSet) return;
   pbjs.initAdserverSet = true;
 
-  _log("bids returned pbjs"); // window.__reactgamloaded = window.__reactgamloaded || {};
-  // window.__reactgamloaded.pbjs = true;
-
+  _log("bids returned pbjs");
 
   _loaded.pbjs = true;
   window.googletag = window.googletag || {};
@@ -125,9 +119,7 @@ var initPbjs = function initPbjs() {
     pbjs.que.push(function () {
       pbjs.setTargetingForGPTAsync();
     });
-  }); // if(window.__reactgamloaded.a9 && window.__reactgamloaded.pbjs){
-  //   displayAds();
-  // }
+  });
 
   if (_loaded.a9 && _loaded.pbjs) {
     displayAds();
@@ -173,10 +165,7 @@ var displayAds = function displayAds() {
 
     _log(_user);
 
-    _log(_adUnits); // for(let i=0; i<_idArr.length; i++){
-    //   window.googletag.display(_idArr[i]);
-    // }
-
+    _log(_adUnits);
   });
 };
 
@@ -10996,12 +10985,6 @@ var _addScriptA9 = function _addScriptA9() {
 };
 
 var _addScriptPbjs = function _addScriptPbjs() {
-  // if(!window.pbjs){
-  //   const script = document.createElement("script");
-  //   script.src = "https://www.pof.com/dist/assets/scripts/prebid/prebid_OT.js?v=v2.44.3";
-  //   script.async = true;
-  //   document.body.appendChild(script);
-  // }
   var pbjsConfig = {
     cache: {
       url: 'https://prebid.adnxs.com/pbc/v1/cache'
@@ -11027,29 +11010,7 @@ var _addScriptPbjs = function _addScriptPbjs() {
   };
   window.pbjs.que.push(function () {
     window.pbjs.setConfig(pbjsConfig);
-  }); // if(_config.DEBUG === true){
-  //   window.pbjs.que.push(function() {
-  //     window.pbjs.setConfig({
-  //       debugging: {
-  //         enabled: true,
-  //         bidders: ['appnexus'],
-  //         bids: [{
-  //           bidder: 'appnexus',
-  //           adUnitCode: '/7214/mat.pof/p2_willrespond__leaderboard',
-  //           cpm: 1.5
-  //         }]
-  //       }
-  //     });
-  //   });
-  // }else{
-  //   window.pbjs.que.push(function() {
-  //     pbjs.setConfig({
-  //       debugging: {
-  //         enabled: false
-  //       }
-  //     });
-  //   });
-  //}
+  });
 };
 "use strict";
 
@@ -11080,38 +11041,38 @@ var _generateBidders = function _generateBidders(sizes) {
     },
     allowSmallerSizes: true,
     params: {
-      placementId: _config.DEBUG ? '13144370' : '11092385'
+      placementId: _config.BIDDER_APPNEXUS_PLACEMENTID
     }
   }, {
     bidder: 'aol',
     params: {
-      placement: '4523445',
-      network: '9457.1'
+      placement: _config.BIDDER_AOL_PLACEMENT,
+      network: _config.BIDDER_AOL_NETWORK
     }
   }, {
     bidder: 'ix',
     params: {
-      id: '11',
-      siteId: '195628',
+      id: _config.BIDDER_IX_ID,
+      siteId: _config.BIDDER_IX_SITEID,
       size: sizes[0]
     }
   }, {
     bidder: 'criteo',
     params: {
-      zoneId: '815048'
+      zoneId: _config.BIDDER_CRITEO_ZONEID
     }
   }, {
     bidder: 'rubicon',
     params: {
-      accountId: "4612",
-      siteId: "211234",
-      zoneId: "1037942"
+      accountId: _config.BIDDER_RUBICON_ACCOUNTID,
+      siteId: _config.BIDDER_RUBICON_SITEID,
+      zoneId: _config.BIDDER_RUBICON_ZONEID
     }
   }, {
     bidder: 'openx',
     params: {
-      unit: "539911301",
-      delDomain: "match-d.openx.net"
+      unit: _config.BIDDER_OPENX_UNIT,
+      delDomain: _config.BIDDER_OPENX_DELDOMAIN
     }
   }];
   return bidders;

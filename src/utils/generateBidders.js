@@ -14,37 +14,37 @@ const _generateBidders = (sizes) => {
     {
       bidder: 'aol',
       params: {
-        placement: '4523445',
-        network: '9457.1',
+        placement: _config.BIDDER_AOL_PLACEMENT,
+        network: _config.BIDDER_AOL_NETWORK,
       }
     }, 
     {
       bidder: 'ix',
       params: {
-        id: '11',
-        siteId: '195628',
+        id: _config.BIDDER_IX_ID,
+        siteId: _config.BIDDER_IX_SITEID,
         size: sizes[0],
       }
     }, 
     {
       bidder: 'criteo',
       params: {
-        zoneId: '815048',
+        zoneId: _config.BIDDER_CRITEO_ZONEID,
       }
     },
     {
       bidder: 'rubicon',
       params: {
-        accountId: "4612",
-        siteId: "211234",
-        zoneId: "1037942"
+        accountId: _config.BIDDER_RUBICON_ACCOUNTID,
+        siteId: _config.BIDDER_RUBICON_SITEID,
+        zoneId: _config.BIDDER_RUBICON_ZONEID
       }
     },
     {
       bidder: 'openx',
       params: {
-        unit: "539911301",
-        delDomain: "match-d.openx.net"
+        unit: _config.BIDDER_OPENX_UNIT,
+        delDomain: _config.BIDDER_OPENX_DELDOMAIN
       }
     }
   ];

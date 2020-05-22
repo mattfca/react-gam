@@ -237,7 +237,6 @@ var displayAds = function displayAds() {
 };
 
 var initRefreshBids = function initRefreshBids(d) {
-  console.log('initRefreshBids', _reUnitArr);
   window.googletag.cmd.push(function () {
     window.pbjs.setTargetingForGPTAsync(_reUnitArr);
 
@@ -254,17 +253,27 @@ var initRefreshBids = function initRefreshBids(d) {
 };
 
 var refreshBid = function refreshBid() {
-  _log('refreshBid');
-
-  console.log(_reIdArr, _reUnitArr);
-  window.pbjs.que.push(function () {
-    console.log('refreshBid', _reUnitArr);
-    window.pbjs.requestBids({
-      bidsBackHandler: initRefreshBids,
-      timeout: PREBID_TIMEOUT,
-      adUnitCodes: _reUnitArr
+  if (_config.PBJS_ENABLED) {
+    window.pbjs.que.push(function () {
+      window.pbjs.requestBids({
+        bidsBackHandler: initRefreshBids,
+        timeout: PREBID_TIMEOUT,
+        adUnitCodes: _reUnitArr
+      });
     });
-  });
+  } else {
+    window.googletag.cmd.push(function () {
+      for (var i = 0; i < _reIdArr.length; i++) {
+        window.googletag.display(_reIdArr[i]);
+      }
+
+      window.googletag.pubads().refresh(_reSlots);
+
+      _log('refresh done!');
+
+      _log(_reIdArr);
+    });
+  }
 };
 
 var _default = {

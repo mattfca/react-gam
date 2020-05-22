@@ -155,11 +155,11 @@ const _fetchBidsPbjs = () => {
   pbjs.que = pbjs.que || [];
 
   pbjs.que.push(function() {
-      pbjs.addAdUnits(adUnits);
-      pbjs.requestBids({
-          bidsBackHandler: initPbjs,
-          timeout: PREBID_TIMEOUT
-      });
+    pbjs.addAdUnits(adUnits);
+    pbjs.requestBids({
+        bidsBackHandler: initPbjs,
+        timeout: PREBID_TIMEOUT
+    });
   });
 
   setTimeout(initPbjs, PREBID_TIMEOUT);
@@ -181,7 +181,6 @@ const displayAds = () => {
 }
 
 const initRefreshBids = (d) => {
-  console.log('initRefreshBids', _reUnitArr)
   window.googletag.cmd.push(function() {
     window.pbjs.setTargetingForGPTAsync(_reUnitArr);
     for (let i=0; i < _reIdArr.length; i++){
@@ -194,16 +193,24 @@ const initRefreshBids = (d) => {
 }
 
 const refreshBid = () => {
-  _log('refreshBid');
-  console.log(_reIdArr, _reUnitArr);
-  window.pbjs.que.push(function() {
-    console.log('refreshBid', _reUnitArr)
-    window.pbjs.requestBids({
-        bidsBackHandler: initRefreshBids,
-        timeout: PREBID_TIMEOUT,
-        adUnitCodes: _reUnitArr,
+  if(_config.PBJS_ENABLED) {
+    window.pbjs.que.push(function() {
+      window.pbjs.requestBids({
+          bidsBackHandler: initRefreshBids,
+          timeout: PREBID_TIMEOUT,
+          adUnitCodes: _reUnitArr,
+      });
     });
-  });
+  }else {
+    window.googletag.cmd.push(function() {
+      for (let i=0; i < _reIdArr.length; i++){
+        window.googletag.display(_reIdArr[i]);
+      }
+      window.googletag.pubads().refresh(_reSlots);
+      _log('refresh done!');
+      _log(_reIdArr);
+    });
+  }
 }
 
 

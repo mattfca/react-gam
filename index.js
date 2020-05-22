@@ -1,40 +1,6 @@
 "use strict";
 
-var _idArr = [];
-
-var AdUnit = function AdUnit(_ref) {
-  var _ref$id = _ref.id,
-      id = _ref$id === void 0 ? '' : _ref$id;
-
-  _idArr.push(id);
-
-  for (var i = 0; i < _adUnits.length; i++) {
-    if (_adUnits[i].id === id) {
-      useGptSlot({
-        path: _adUnits[i].unit,
-        size: _adUnits[i].sizes,
-        id: id
-      });
-      break;
-    }
-  }
-
-  return /*#__PURE__*/React.createElement("div", {
-    id: id,
-    style: {
-      width: 'auto',
-      height: 'auto'
-    }
-  });
-};
-"use strict";
-
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports["default"] = void 0;
 
 var React = _interopRequireWildcard(require("react"));
 
@@ -42,247 +8,512 @@ function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return 
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return; var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
 var PREBID_TIMEOUT = 1500;
 var A9_TIMEOUT = 1500;
-var _config = {};
-var _user = {};
-var _adUnits = [];
-var _loaded = {};
-var _reUnitArr = [];
-var _reIdArr = [];
-var _slots = [];
-var _reSlots = [];
 
-var init = function init(adUnits, config) {
-  var user = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-  _config = config;
-  _user = user;
-  _reUnitArr = [];
-  _reIdArr = [];
+var GAM = /*#__PURE__*/function () {
+  function GAM(adUnits, gamConfig, gamUser) {
+    _classCallCheck(this, GAM);
 
-  var _loop = function _loop(i) {
-    var obj = {
-      sizes: adUnits[i].sizes,
-      id: adUnits[i].id
-    };
-    adUnits[i].units.forEach(function (item, index) {
-      var c = adUnits[i].units[index].constraints;
+    this.gamUser = gamUser;
+    this.gamConfig = gamConfig;
+    this.adUnits = adUnits;
+    this.gamAdUnits = [];
+    this.idArr = [];
+    this.reIdArr = [];
+    this.reUnitArr = [];
+    this.slots = [];
+    this.reSlots = [];
+    this.loaded = {};
+    this.bidResponsePbjs = this.bidResponsePbjs.bind(this);
+    this.refreshBid = this.refreshBid.bind(this);
+    this.renderAdUnit = this.renderAdUnit.bind(this);
+    this.useGptSlot = this.useGptSlot.bind(this);
+    this.defineAdUnits();
+    this.initializeGpt();
+    if (this.gamConfig.A9_ENABLED) this.initializeA9();
+    if (this.gamConfig.PBJS_ENABLED) this.initializePbjs();
+    if (this.gamConfig.A9_ENABLED) this.fetchBidsA9();
+    if (this.gamConfig.PBJS_ENABLED) this.fetchBidsPbjs();
+  } // renderAdUnit
 
-      if (!c) {
-        obj.unit = adUnits[i].units[index].unit;
-        return;
+
+  _createClass(GAM, [{
+    key: "renderAdUnit",
+    value: function renderAdUnit(_ref) {
+      var id = _ref.id;
+      console.log('id::::', id);
+
+      for (var i = 0; i < this.gamAdUnits.length; i++) {
+        if (this.gamAdUnits[i].id === id) {
+          this.useGptSlot({
+            path: this.gamAdUnits[i].unit,
+            size: this.gamAdUnits[i].sizes,
+            id: id
+          });
+          break;
+        }
       }
 
-      if (Object.keys(c).length === 0) {
-        obj.unit = adUnits[i].units[index].unit;
-        return;
+      return /*#__PURE__*/React.createElement("div", {
+        id: id,
+        style: {
+          width: 'auto',
+          height: 'auto'
+        }
+      });
+    } // refreshBidResponsePbjs
+
+  }, {
+    key: "refreshBidResponsePbjs",
+    value: function refreshBidResponsePbjs() {
+      var _this = this;
+
+      window.googletag.cmd.push(function () {
+        window.pbjs.setTargetingForGPTAsync(_this.reUnitArr);
+
+        for (var i = 0; i < _this.reIdArr.length; i++) {
+          window.googletag.display(_this.reIdArr[i]);
+        }
+
+        console.log("slots", _this.reSlots);
+        window.googletag.pubads().refresh(_this.reSlots);
+
+        _this.log('Refreshing ad units with pbjs');
+
+        _this.log(_this.reIdArr);
+      });
+    } // refreshBid
+
+  }, {
+    key: "refreshBid",
+    value: function refreshBid() {
+      var _this2 = this;
+
+      console.log('re', this.reSlots);
+      console.log('re', this.reUnitArr);
+      console.log('re', this.reIdArr);
+
+      if (this.gamConfig.PBJS_ENABLED) {
+        window.pbjs.que.push(function () {
+          window.pbjs.requestBids({
+            bidsBackHandler: function bidsBackHandler() {
+              return _this2.refreshBidResponsePbjs();
+            },
+            timeout: PREBID_TIMEOUT,
+            adUnitCodes: _this2.reUnitArr
+          });
+        });
+      } else {
+        window.googletag.cmd.push(function () {
+          for (var i = 0; i < this.reIdArr.length; i++) {
+            window.googletag.display(this.reIdArr[i]);
+          }
+
+          window.googletag.pubads().refresh(this.reSlots);
+          this.log('Refreshing ad units');
+          this.log(this.reIdArr);
+        });
       }
+    } // useGptSlot
 
-      var found = false;
+  }, {
+    key: "useGptSlot",
+    value: function useGptSlot(_ref2) {
+      var _this3 = this;
 
-      for (var p in c) {
-        if (c.hasOwnProperty(p)) {
-          var unitConstraint = c[p];
+      var path = _ref2.path,
+          size = _ref2.size,
+          id = _ref2.id;
+      React.useEffect(function () {
+        window.googletag = window.googletag || {};
+        window.googletag.cmd = window.googletag.cmd || [];
+        window.googletag.cmd.push(function () {
+          var definedSlot = window.googletag.defineSlot(path, size, id);
+          if (_this3.gamConfig.ADOMIK_ENABLED) definedSlot.setTargeting('ad_group', Adomik.randomAdGroup());
+          if (_this3.gamConfig.ADOMIK_ENABLED) definedSlot.setTargeting('ad_h', new Date().getUTCHours().toString());
+          var entries = Object.entries(_this3.gamUser);
 
-          if (_user.hasOwnProperty(p)) {
-            if (_user[p] === unitConstraint) {
-              _log('match on' + p + '=' + unitConstraint);
+          for (var _i = 0, _entries = entries; _i < _entries.length; _i++) {
+            var _entries$_i = _slicedToArray(_entries[_i], 2),
+                key = _entries$_i[0],
+                value = _entries$_i[1];
 
-              found = true;
-            } else {
-              _log('no match on' + p + '=' + unitConstraint);
+            definedSlot.setTargeting(key, value);
+          }
 
-              found = false;
+          definedSlot.addService(window.googletag.pubads());
+
+          _this3.slots.push(definedSlot);
+
+          if (_this3.reIdArr.includes(id)) _this3.reSlots.push(definedSlot);
+          window.googletag.pubads().enableSingleRequest();
+          window.googletag.enableServices();
+        });
+      }, [path, size, id]);
+    } // displayAds
+
+  }, {
+    key: "displayAds",
+    value: function displayAds() {
+      var _this4 = this;
+
+      window.googletag.cmd.push(function () {
+        for (var i = 0; i < _this4.gamAdUnits.length; i++) {
+          window.googletag.display(_this4.gamAdUnits[i].id);
+        }
+
+        window.googletag.pubads().refresh();
+
+        _this4.log('Rendering ad units');
+      });
+    } // bidResponsePbjs
+
+  }, {
+    key: "bidResponsePbjs",
+    value: function bidResponsePbjs() {
+      this.log('Bids returned from pbjs');
+      if (this.loaded.pbjs) return;
+      this.loaded.pbjs = true;
+      window.googletag = window.googletag || {};
+      window.googletag.cmd = window.googletag.cmd || [];
+      googletag.cmd.push(function () {
+        pbjs.que.push(function () {
+          window.pbjs.setTargetingForGPTAsync();
+        });
+      });
+
+      if (this.loaded.a9 && this.loaded.pbjs) {
+        this.log('pbjs render ads');
+        this.displayAds();
+      }
+    } // fetchBidsPbjs
+
+  }, {
+    key: "fetchBidsPbjs",
+    value: function fetchBidsPbjs() {
+      var adUnits = [];
+
+      for (var i = 0; i < this.gamAdUnits.length; i++) {
+        var bidders = this.generateBidders(this.gamAdUnits[i].sizes);
+        adUnits.push({
+          code: this.gamAdUnits[i].unit,
+          bids: bidders,
+          sizes: this.gamAdUnits[i].sizes,
+          mediaTypes: {
+            banner: {
+              sizes: this.gamAdUnits[i].sizes
             }
           }
-        }
+        });
       }
 
-      if (found) {
-        obj.unit = adUnits[i].units[index].unit;
-      }
-    });
-    var refresh = adUnits[i]._refresh;
-    var id = adUnits[i].id;
-    var unit = obj.unit;
+      this.log('Fetching bids from pbjs');
+      this.log(adUnits);
+      window.pbjs.que = window.pbjs.que || [];
+      window.pbjs.que.push(function () {
+        var _this5 = this;
 
-    if (refresh) {
-      _reUnitArr.push(unit);
-
-      _reIdArr.push(id);
-    }
-
-    _adUnits.push(obj);
-  };
-
-  for (var i = 0; i < adUnits.length; i++) {
-    _loop(i);
-  }
-
-  _addScript();
-
-  if (_config.A9_ENABLED) {
-    _addScriptA9();
-
-    window.apstag.init({
-      pubID: _config.A9_PUBID,
-      adServer: 'googletag'
-    });
-
-    _fetchBidsA9();
-  }
-
-  if (_config.PBJS_ENABLED) {
-    _addScriptPbjs();
-
-    _fetchBidsPbjs();
-  }
-};
-
-var _fetchBidsA9 = function _fetchBidsA9() {
-  var adUnits = [];
-
-  for (var i = 0; i < _adUnits.length; i++) {
-    adUnits.push({
-      slotID: _adUnits[i].id,
-      slotName: _adUnits[i].unit,
-      sizes: _adUnits[i].sizes
-    });
-  }
-
-  window.apstag.fetchBids({
-    slots: adUnits,
-    timeout: A9_TIMEOUT
-  }, initA9);
-};
-
-var initA9 = function initA9() {
-  _log("bids returned a9");
-
-  _loaded.a9 = true;
-  googletag.cmd.push(function () {
-    apstag.setDisplayBids();
-  });
-
-  if (_loaded.a9 && _loaded.pbjs) {
-    displayAds();
-  }
-};
-
-var initPbjs = function initPbjs() {
-  if (pbjs.initAdserverSet) return;
-  pbjs.initAdserverSet = true;
-
-  _log("bids returned pbjs");
-
-  _loaded.pbjs = true;
-  window.googletag = window.googletag || {};
-  window.googletag.cmd = window.googletag.cmd || [];
-  googletag.cmd.push(function () {
-    pbjs.que.push(function () {
-      pbjs.setTargetingForGPTAsync();
-    });
-  });
-
-  if (_loaded.a9 && _loaded.pbjs) {
-    displayAds();
-  }
-};
-
-var _fetchBidsPbjs = function _fetchBidsPbjs() {
-  var adUnits = [];
-
-  for (var i = 0; i < _adUnits.length; i++) {
-    var bidders = _generateBidders(_adUnits[i].sizes);
-
-    adUnits.push({
-      code: _adUnits[i].unit,
-      bids: bidders,
-      sizes: _adUnits[i].sizes,
-      mediaTypes: {
-        banner: {
-          sizes: _adUnits[i].sizes
-        }
-      }
-    });
-  }
-
-  pbjs.que = pbjs.que || [];
-  pbjs.que.push(function () {
-    pbjs.addAdUnits(adUnits);
-    pbjs.requestBids({
-      bidsBackHandler: initPbjs,
-      timeout: PREBID_TIMEOUT
-    });
-  });
-  setTimeout(initPbjs, PREBID_TIMEOUT);
-};
-
-var displayAds = function displayAds() {
-  window.googletag.cmd.push(function () {
-    for (var i = 0; i < _adUnits.length; i++) {
-      window.googletag.display(_adUnits[i].id);
-    }
-
-    window.googletag.pubads().refresh();
-
-    _log('display ads!');
-
-    _log(_config);
-
-    _log(_user);
-
-    _log(_adUnits);
-  });
-};
-
-var initRefreshBids = function initRefreshBids(d) {
-  window.googletag.cmd.push(function () {
-    window.pbjs.setTargetingForGPTAsync(_reUnitArr);
-
-    for (var i = 0; i < _reIdArr.length; i++) {
-      window.googletag.display(_reIdArr[i]);
-    }
-
-    window.googletag.pubads().refresh(_reSlots);
-
-    _log('refresh done!');
-
-    _log(_reIdArr);
-  });
-};
-
-var refreshBid = function refreshBid() {
-  if (_config.PBJS_ENABLED) {
-    window.pbjs.que.push(function () {
-      window.pbjs.requestBids({
-        bidsBackHandler: initRefreshBids,
-        timeout: PREBID_TIMEOUT,
-        adUnitCodes: _reUnitArr
+        window.pbjs.addAdUnits(adUnits);
+        window.pbjs.requestBids({
+          bidsBackHandler: function bidsBackHandler() {
+            return _this5.bidResponsePbjs();
+          },
+          timeout: PREBID_TIMEOUT
+        });
       });
-    });
-  } else {
-    window.googletag.cmd.push(function () {
-      for (var i = 0; i < _reIdArr.length; i++) {
-        window.googletag.display(_reIdArr[i]);
+      setTimeout(this.bidResponsePbjs, PREBID_TIMEOUT);
+    } // fetchBidsA9
+
+  }, {
+    key: "fetchBidsA9",
+    value: function fetchBidsA9() {
+      var _this6 = this;
+
+      var adUnits = [];
+
+      for (var i = 0; i < this.gamAdUnits.length; i++) {
+        adUnits.push({
+          slotID: this.gamAdUnits[i].id,
+          slotName: this.gamAdUnits[i].unit,
+          sizes: this.gamAdUnits[i].sizes
+        });
       }
 
-      window.googletag.pubads().refresh(_reSlots);
+      this.log('Fetching bids from A9');
+      this.log(adUnits);
+      window.apstag.fetchBids({
+        slots: adUnits,
+        timeout: A9_TIMEOUT
+      }, function () {
+        _this6.log('Bids returned from A9');
 
-      _log('refresh done!');
+        _this6.loaded.a9 = true;
+        googletag.cmd.push(function () {
+          apstag.setDisplayBids();
+        });
 
-      _log(_reIdArr);
-    });
-  }
-};
+        if (_this6.loaded.a9 && _this6.loaded.pbjs) {
+          _this6.log('a9 render ads');
 
-var _default = {
-  init: init,
-  AdUnit: AdUnit,
-  displayAds: displayAds,
-  refreshBid: refreshBid
-};
-exports["default"] = _default;
+          _this6.displayAds();
+        }
+      });
+    } // initializePbjs
+
+  }, {
+    key: "initializePbjs",
+    value: function initializePbjs() {
+      this.log('Initialize pbjs');
+      var pbjsConfig = {
+        cache: {
+          url: 'https://prebid.adnxs.com/pbc/v1/cache'
+        },
+        s2sConfig: {
+          endpoint: 'https://prebid.adnxs.com/pbs/v1/auction',
+          syncEndpoint: 'https://prebid.adnxs.com/pbs/v1/cookie_sync'
+        },
+        enableSendAllBids: true,
+        priceGranularity: 'dense'
+      };
+
+      if (this.gamConfig.ONETRUST_ENABLED) {
+        pbjsConfig.consentManagement = {
+          cmpApi: 'iab',
+          timeout: 8000,
+          allowAuctionWithoutConsent: true
+        };
+      }
+
+      window.pbjs = window.pbjs || {
+        que: []
+      };
+      window.pbjs.que.push(function () {
+        window.pbjs.setConfig(pbjsConfig);
+      });
+    } // initializeA9
+
+  }, {
+    key: "initializeA9",
+    value: function initializeA9() {
+      this.log('Initialize a9');
+
+      if (!window.apstag) {
+        var q = function q(c, r) {
+          window.apstag._Q.push([c, r]);
+        };
+
+        var script = document.createElement("script");
+        script.src = "https://c.amazon-adsystem.com/aax2/apstag.js";
+        script.async = true;
+        document.body.appendChild(script);
+        window.apstag = window.apstag || {
+          _Q: []
+        };
+
+        if (typeof window.apstag.init === 'undefined') {
+          window.apstag.init = function () {
+            q('i', arguments);
+          };
+        }
+
+        if (typeof window.apstag.fetchBids === 'undefined') {
+          window.apstag.fetchBids = function () {
+            q('f', arguments);
+          };
+        }
+
+        if (typeof window.apstag.setDisplayBids === 'undefined') {
+          window.apstag.setDisplayBids = function () {};
+        }
+
+        if (typeof window.apstag.setDisplayBids === 'undefined') {
+          window.apstag.targetingKeys = function () {
+            return [];
+          };
+        }
+      }
+
+      window.apstag.init({
+        pubID: this.gamConfig.A9_PUBID,
+        adServer: 'googletag'
+      });
+    } // initializeGpt
+
+  }, {
+    key: "initializeGpt",
+    value: function initializeGpt() {
+      this.log('Initialize gpt');
+      window.googletag = window.googletag || {};
+      window.googletag.cmd = window.googletag.cmd || [];
+      googletag.cmd.push(function () {
+        window.googletag.pubads().disableInitialLoad();
+      });
+
+      if (!window.googletag.apiReady) {
+        var script = document.createElement("script");
+        script.src = "https://www.googletagservices.com/tag/js/gpt.js";
+        script.async = true;
+        document.body.appendChild(script);
+      }
+    } // defineAdUnits
+
+  }, {
+    key: "defineAdUnits",
+    value: function defineAdUnits() {
+      var _this7 = this;
+
+      var adUnits = this.adUnits;
+
+      var _loop = function _loop(i) {
+        var obj = {
+          sizes: adUnits[i].sizes,
+          id: adUnits[i].id
+        };
+        adUnits[i].units.forEach(function (item, index) {
+          var c = adUnits[i].units[index].constraints;
+
+          if (!c) {
+            obj.unit = adUnits[i].units[index].unit;
+            return;
+          }
+
+          if (Object.keys(c).length === 0) {
+            obj.unit = adUnits[i].units[index].unit;
+            return;
+          }
+
+          var found = false;
+
+          for (var p in c) {
+            if (c.hasOwnProperty(p)) {
+              var unitConstraint = c[p];
+
+              if (_this7.gamUser.hasOwnProperty(p)) {
+                if (_this7.gamUser[p] === unitConstraint) {
+                  found = true;
+                } else {
+                  found = false;
+                }
+              }
+            }
+          }
+
+          if (found) {
+            obj.unit = adUnits[i].units[index].unit;
+          }
+        });
+        var refresh = adUnits[i]._refresh;
+        var id = adUnits[i].id;
+        var unit = obj.unit;
+
+        if (refresh) {
+          _this7.reUnitArr.push(unit);
+
+          _this7.reIdArr.push(id);
+        }
+
+        _this7.gamAdUnits.push(obj);
+      };
+
+      for (var i = 0; i < adUnits.length; i++) {
+        _loop(i);
+      }
+    }
+  }, {
+    key: "generateBidders",
+    value: function generateBidders(sizes) {
+      var bidders = [];
+      if (this.gamConfig.BIDDER_APPNEXUS_ENABLED) bidders.push({
+        bidder: 'appnexus',
+        user: {
+          gender: this.gamUser.gender === 'm' ? 1 : this.gamUser.gender === 'f' ? 2 : 0,
+          age: this.gamUser.age || 0
+        },
+        allowSmallerSizes: true,
+        params: {
+          placementId: this.gamConfig.BIDDER_APPNEXUS_PLACEMENTID
+        }
+      });
+      if (this.gamConfig.BIDDER_AOL_ENABLED) bidders.push({
+        bidder: 'aol',
+        params: {
+          placement: this.gamConfig.BIDDER_AOL_PLACEMENT,
+          network: this.gamConfig.BIDDER_AOL_NETWORK
+        }
+      });
+      if (this.gamConfig.BIDDER_IX_ENABLED) bidders.push({
+        bidder: 'ix',
+        params: {
+          id: this.gamConfig.BIDDER_IX_ID,
+          siteId: this.gamConfig.BIDDER_IX_SITEID,
+          size: sizes[0]
+        }
+      });
+      if (this.gamConfig.BIDDER_CRITEO_ENABLED) bidders.push({
+        bidder: 'criteo',
+        params: {
+          zoneId: this.gamConfig.BIDDER_CRITEO_ZONEID
+        }
+      });
+      if (this.gamConfig.BIDDER_RUBICON_ENABLED) bidders.push({
+        bidder: 'rubicon',
+        params: {
+          accountId: this.gamConfig.BIDDER_RUBICON_ACCOUNTID,
+          siteId: this.gamConfig.BIDDER_RUBICON_SITEID,
+          zoneId: this.gamConfig.BIDDER_RUBICON_ZONEID
+        }
+      });
+      if (this.gamConfig.BIDDER_OPENX_ENABLED) bidders.push({
+        bidder: 'openx',
+        params: {
+          unit: this.gamConfig.BIDDER_OPENX_UNIT,
+          delDomain: this.gamConfig.BIDDER_OPENX_DELDOMAIN
+        }
+      });
+      return bidders;
+    } // logDetails
+
+  }, {
+    key: "logDetails",
+    value: function logDetails() {
+      console.log(this.gamUser);
+      console.log(this.gamConfig);
+      console.log(this.reUnitArr);
+      console.log(this.reIdArr);
+      console.log(this.gamAdUnits);
+    }
+  }, {
+    key: "log",
+    value: function log(msg) {
+      if (this.gamConfig.DEBUG) {
+        console.log(msg);
+      }
+    }
+  }]);
+
+  return GAM;
+}();
+
+module.exports = GAM;
 "use strict";
 
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
@@ -11004,134 +11235,6 @@ pbjsChunk([107], {
 pbjs.processQueue();
 "use strict";
 
-function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
-
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
-function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return; var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
-
-function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
-
-var useGptSlot = function useGptSlot(_ref) {
-  var path = _ref.path,
-      size = _ref.size,
-      id = _ref.id;
-  React.useEffect(function () {
-    window.googletag = window.googletag || {};
-    window.googletag.cmd = window.googletag.cmd || [];
-    googletag.cmd.push(function () {
-      var definedSlot = window.googletag.defineSlot(path, size, id);
-      if (_config.ADOMIK_ENABLED) definedSlot.setTargeting('ad_group', Adomik.randomAdGroup());
-      if (_config.ADOMIK_ENABLED) definedSlot.setTargeting('ad_h', new Date().getUTCHours().toString());
-      var entries = Object.entries(_user);
-
-      for (var _i = 0, _entries = entries; _i < _entries.length; _i++) {
-        var _entries$_i = _slicedToArray(_entries[_i], 2),
-            key = _entries$_i[0],
-            value = _entries$_i[1];
-
-        definedSlot.setTargeting(key, value);
-      }
-
-      definedSlot.addService(window.googletag.pubads());
-
-      _slots.push(definedSlot);
-
-      if (_reIdArr.includes(id)) _reSlots.push(definedSlot);
-      window.googletag.pubads().enableSingleRequest();
-      window.googletag.enableServices();
-    });
-  }, [path, size, id]);
-};
-"use strict";
-
-var _addScript = function _addScript() {
-  if (!window.googletag) {
-    var script = document.createElement("script");
-    script.src = "https://www.googletagservices.com/tag/js/gpt.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }
-
-  window.googletag = window.googletag || {};
-  window.googletag.cmd = window.googletag.cmd || [];
-  googletag.cmd.push(function () {
-    window.googletag.pubads().disableInitialLoad();
-  });
-};
-
-var _addScriptA9 = function _addScriptA9() {
-  if (!window.apstag) {
-    var q = function q(c, r) {
-      window.apstag._Q.push([c, r]);
-    };
-
-    var script = document.createElement("script");
-    script.src = "https://c.amazon-adsystem.com/aax2/apstag.js";
-    script.async = true;
-    document.body.appendChild(script);
-    window.apstag = window.apstag || {
-      _Q: []
-    };
-
-    if (typeof window.apstag.init === 'undefined') {
-      window.apstag.init = function () {
-        q('i', arguments);
-      };
-    }
-
-    if (typeof window.apstag.fetchBids === 'undefined') {
-      window.apstag.fetchBids = function () {
-        q('f', arguments);
-      };
-    }
-
-    if (typeof window.apstag.setDisplayBids === 'undefined') {
-      window.apstag.setDisplayBids = function () {};
-    }
-
-    if (typeof window.apstag.setDisplayBids === 'undefined') {
-      window.apstag.targetingKeys = function () {
-        return [];
-      };
-    }
-  }
-};
-
-var _addScriptPbjs = function _addScriptPbjs() {
-  var pbjsConfig = {
-    cache: {
-      url: 'https://prebid.adnxs.com/pbc/v1/cache'
-    },
-    s2sConfig: {
-      endpoint: 'https://prebid.adnxs.com/pbs/v1/auction',
-      syncEndpoint: 'https://prebid.adnxs.com/pbs/v1/cookie_sync'
-    },
-    enableSendAllBids: true,
-    priceGranularity: 'dense'
-  };
-
-  if (_config.ONETRUST_ENABLED) {
-    pbjsConfig.consentManagement = {
-      cmpApi: 'iab',
-      timeout: 8000,
-      allowAuctionWithoutConsent: true
-    };
-  }
-
-  window.pbjs = window.pbjs || {
-    que: []
-  };
-  window.pbjs.que.push(function () {
-    window.pbjs.setConfig(pbjsConfig);
-  });
-};
-"use strict";
-
 var Adomik = {
   randomAdGroup: function randomAdGroup() {
     var rand = Math.random();
@@ -11146,65 +11249,5 @@ var Adomik = {
       default:
         return 'ad_opt';
     }
-  }
-};
-"use strict";
-
-var _generateBidders = function _generateBidders(sizes) {
-  var bidders = [];
-  if (_config.BIDDER_APPNEXUS_ENABLED) bidders.push({
-    bidder: 'appnexus',
-    user: {
-      gender: _user.gender === 'm' ? 1 : _user.gender === 'f' ? 2 : 0,
-      age: _user.age || 0
-    },
-    allowSmallerSizes: true,
-    params: {
-      placementId: _config.BIDDER_APPNEXUS_PLACEMENTID
-    }
-  });
-  if (_config.BIDDER_AOL_ENABLED) bidders.push({
-    bidder: 'aol',
-    params: {
-      placement: _config.BIDDER_AOL_PLACEMENT,
-      network: _config.BIDDER_AOL_NETWORK
-    }
-  });
-  if (_config.BIDDER_IX_ENABLED) bidders.push({
-    bidder: 'ix',
-    params: {
-      id: _config.BIDDER_IX_ID,
-      siteId: _config.BIDDER_IX_SITEID,
-      size: sizes[0]
-    }
-  });
-  if (_config.BIDDER_CRITEO_ENABLED) bidders.push({
-    bidder: 'criteo',
-    params: {
-      zoneId: _config.BIDDER_CRITEO_ZONEID
-    }
-  });
-  if (_config.BIDDER_RUBICON_ENABLED) bidders.push({
-    bidder: 'rubicon',
-    params: {
-      accountId: _config.BIDDER_RUBICON_ACCOUNTID,
-      siteId: _config.BIDDER_RUBICON_SITEID,
-      zoneId: _config.BIDDER_RUBICON_ZONEID
-    }
-  });
-  if (_config.BIDDER_OPENX_ENABLED) bidders.push({
-    bidder: 'openx',
-    params: {
-      unit: _config.BIDDER_OPENX_UNIT,
-      delDomain: _config.BIDDER_OPENX_DELDOMAIN
-    }
-  });
-  return bidders;
-};
-"use strict";
-
-var _log = function _log(msg) {
-  if (_config.DEBUG) {
-    console.log(msg);
   }
 };

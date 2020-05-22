@@ -48,13 +48,76 @@ var _config = {};
 var _user = {};
 var _adUnits = [];
 var _loaded = {};
+var _reUnitArr = [];
+var _reIdArr = [];
+var _slots = [];
+var _reSlots = [];
 
 var init = function init(adUnits, config) {
   var user = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
   _config = config;
   _user = user;
-  _adUnits = adUnits;
-  window.__reactgamloaded = {};
+  _reUnitArr = [];
+  _reIdArr = [];
+
+  var _loop = function _loop(i) {
+    var obj = {
+      sizes: adUnits[i].sizes,
+      id: adUnits[i].id
+    };
+    adUnits[i].units.forEach(function (item, index) {
+      var c = adUnits[i].units[index].constraints;
+
+      if (!c) {
+        obj.unit = adUnits[i].units[index].unit;
+        return;
+      }
+
+      if (Object.keys(c).length === 0) {
+        obj.unit = adUnits[i].units[index].unit;
+        return;
+      }
+
+      var found = false;
+
+      for (var p in c) {
+        if (c.hasOwnProperty(p)) {
+          var unitConstraint = c[p];
+
+          if (_user.hasOwnProperty(p)) {
+            if (_user[p] === unitConstraint) {
+              _log('match on' + p + '=' + unitConstraint);
+
+              found = true;
+            } else {
+              _log('no match on' + p + '=' + unitConstraint);
+
+              found = false;
+            }
+          }
+        }
+      }
+
+      if (found) {
+        obj.unit = adUnits[i].units[index].unit;
+      }
+    });
+    var refresh = adUnits[i]._refresh;
+    var id = adUnits[i].id;
+    var unit = obj.unit;
+
+    if (refresh) {
+      _reUnitArr.push(unit);
+
+      _reIdArr.push(id);
+    }
+
+    _adUnits.push(obj);
+  };
+
+  for (var i = 0; i < adUnits.length; i++) {
+    _loop(i);
+  }
 
   _addScript();
 
@@ -157,6 +220,10 @@ var _fetchBidsPbjs = function _fetchBidsPbjs() {
 
 var displayAds = function displayAds() {
   window.googletag.cmd.push(function () {
+    for (var i = 0; i < _adUnits.length; i++) {
+      window.googletag.display(_adUnits[i].id);
+    }
+
     window.googletag.pubads().refresh();
 
     _log('display ads!');
@@ -169,10 +236,42 @@ var displayAds = function displayAds() {
   });
 };
 
+var initRefreshBids = function initRefreshBids(d) {
+  console.log('initRefreshBids', _reUnitArr);
+  window.googletag.cmd.push(function () {
+    window.pbjs.setTargetingForGPTAsync(_reUnitArr);
+
+    for (var i = 0; i < _reIdArr.length; i++) {
+      window.googletag.display(_reIdArr[i]);
+    }
+
+    window.googletag.pubads().refresh(_reSlots);
+
+    _log('refresh done!');
+
+    _log(_reIdArr);
+  });
+};
+
+var refreshBid = function refreshBid() {
+  _log('refreshBid');
+
+  console.log(_reIdArr, _reUnitArr);
+  window.pbjs.que.push(function () {
+    console.log('refreshBid', _reUnitArr);
+    window.pbjs.requestBids({
+      bidsBackHandler: initRefreshBids,
+      timeout: PREBID_TIMEOUT,
+      adUnitCodes: _reUnitArr
+    });
+  });
+};
+
 var _default = {
   init: init,
   AdUnit: AdUnit,
-  displayAds: displayAds
+  displayAds: displayAds,
+  refreshBid: refreshBid
 };
 exports["default"] = _default;
 "use strict";
@@ -10930,6 +11029,10 @@ var useGptSlot = function useGptSlot(_ref) {
       }
 
       definedSlot.addService(window.googletag.pubads());
+
+      _slots.push(definedSlot);
+
+      if (_reIdArr.includes(id)) _reSlots.push(definedSlot);
       window.googletag.pubads().enableSingleRequest();
       window.googletag.enableServices();
     });
@@ -10944,6 +11047,12 @@ var _addScript = function _addScript() {
     script.async = true;
     document.body.appendChild(script);
   }
+
+  window.googletag = window.googletag || {};
+  window.googletag.cmd = window.googletag.cmd || [];
+  googletag.cmd.push(function () {
+    window.googletag.pubads().disableInitialLoad();
+  });
 };
 
 var _addScriptA9 = function _addScriptA9() {

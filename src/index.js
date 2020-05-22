@@ -4,18 +4,70 @@ const PREBID_TIMEOUT = 1500;
 const A9_TIMEOUT = 1500;
 
 let _config = {};
-
 let _user = {};
-
 let _adUnits = [];
-
 let _loaded = {};
+let _reUnitArr = [];
+let _reIdArr = [];
+let _slots = [];
+let _reSlots = [];
 
 const init = (adUnits, config, user = {}) => {
   _config = config;
   _user = user;
-  _adUnits = adUnits;
-  window.__reactgamloaded = {};
+  _reUnitArr = [];
+  _reIdArr = [];
+
+  for(let i=0; i < adUnits.length; i++){
+    let obj = {
+      sizes: adUnits[i].sizes,
+      id: adUnits[i].id,
+    };
+
+    adUnits[i].units.forEach(function (item, index) {
+      let c = adUnits[i].units[index].constraints
+
+      if(!c) {
+        obj.unit =  adUnits[i].units[index].unit;
+        return;
+      }
+      if(Object.keys(c).length === 0){
+        obj.unit =  adUnits[i].units[index].unit;
+        return;
+      }
+
+      let found = false;
+      for (var p in c) {
+        if (c.hasOwnProperty(p)) {
+          let unitConstraint = c[p];
+          if(_user.hasOwnProperty(p)){
+            if(_user[p] === unitConstraint){
+              _log('match on' + p + '=' + unitConstraint)
+              found = true;
+            }else {
+              _log('no match on' + p + '=' + unitConstraint)
+              found = false;
+            }
+          }
+        }
+      }
+
+      if(found){
+        obj.unit =  adUnits[i].units[index].unit;
+      }
+    });
+
+    let refresh = adUnits[i]._refresh;
+    let id = adUnits[i].id;
+    let unit = obj.unit;
+
+    if(refresh){
+      _reUnitArr.push(unit);
+      _reIdArr.push(id);
+    }
+    
+    _adUnits.push(obj);
+  }
 
   _addScript();
   if(_config.A9_ENABLED) {
@@ -115,6 +167,10 @@ const _fetchBidsPbjs = () => {
 
 const displayAds = () => {
   window.googletag.cmd.push(function() {
+    for (let i=0; i < _adUnits.length; i++){
+      window.googletag.display(_adUnits[i].id);
+    }
+
     window.googletag.pubads().refresh();
     
     _log('display ads!');
@@ -124,4 +180,31 @@ const displayAds = () => {
   });
 }
 
-export default {init, AdUnit, displayAds};
+const initRefreshBids = (d) => {
+  console.log('initRefreshBids', _reUnitArr)
+  window.googletag.cmd.push(function() {
+    window.pbjs.setTargetingForGPTAsync(_reUnitArr);
+    for (let i=0; i < _reIdArr.length; i++){
+      window.googletag.display(_reIdArr[i]);
+    }
+    window.googletag.pubads().refresh(_reSlots);
+    _log('refresh done!');
+    _log(_reIdArr);
+  });
+}
+
+const refreshBid = () => {
+  _log('refreshBid');
+  console.log(_reIdArr, _reUnitArr);
+  window.pbjs.que.push(function() {
+    console.log('refreshBid', _reUnitArr)
+    window.pbjs.requestBids({
+        bidsBackHandler: initRefreshBids,
+        timeout: PREBID_TIMEOUT,
+        adUnitCodes: _reUnitArr,
+    });
+  });
+}
+
+
+export default {init, AdUnit, displayAds, refreshBid};

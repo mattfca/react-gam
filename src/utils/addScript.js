@@ -5,6 +5,13 @@ const _addScript = () => {
     script.async = true;
     document.body.appendChild(script);
   }
+
+  window.googletag = window.googletag || {};
+  window.googletag.cmd = window.googletag.cmd || [];
+  
+  googletag.cmd.push(function() {
+    window.googletag.pubads().disableInitialLoad();
+  });
 }
 
 const _addScriptA9 = () => {
